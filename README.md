@@ -10,7 +10,7 @@
 ## ![index.png](https://raw.githubusercontent.com/WangSunio/img/main/images/index.png)
 ## ![detail.png](https://raw.githubusercontent.com/WangSunio/img/main/images/detail.png)
 ![report.png](https://raw.githubusercontent.com/WangSunio/img/main/images/cols.png)
-![report.png](https://raw.githubusercontent.com/WangSunio/img/main/images/pdf.png)
+# ![report.png](https://raw.githubusercontent.com/WangSunio/img/main/images/pdf.png)
 
 
 ## 源仓库 [celeris](https://github.com/kirklin/celeris-web)
