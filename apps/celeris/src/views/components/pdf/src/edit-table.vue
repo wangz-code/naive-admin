@@ -1,7 +1,7 @@
 <!--
  * @Author: wangqz
  * @Date: 2024-12-10
- * @LastEditTime: 2024-12-11
+ * @LastEditTime: 2024-12-17
  * @Description: content
 -->
 <style scoped>
@@ -11,15 +11,12 @@
 .min-num-input {
   width: 30px;
 }
-.b-primary {
-  border: 1px var(--primary-color) solid;
-}
 </style>
 <template>
-  <n-card size="small" class="b-primary m-b-2" hoverable>
+  <n-card size="small" hoverable>
     <n-flex :size="[2, 5]">
       <div>
-        <n-input v-model:value="table.table.tittle" size="small" style="width: 110px">
+        <n-input v-model:value="table.tittle" size="small" style="width: 110px">
           <template #prefix>
             <n-icon size="20" color="var(--primary-color)">
               <Tabler3DCubeSphere />
@@ -63,11 +60,17 @@
             </n-input-group>
           </template>
           列宽:
-          <n-button-group size="tiny">
+          <n-button-group size="tiny" class="m-1">
             <n-button @click="table.table.widths[wIdx] = 'auto'"> 自动 </n-button>
             <n-button @click="table.table.widths[wIdx] = '*'"> 填充 </n-button>
-            <n-input-number v-model:value="table.table.widths[wIdx] as number" size="tiny" placeholder="宽度" style="width: 45px" :show-button="false" />
+            <n-button @click="table.table.widths[wIdx] = 100" class="m-r-sm"> 输入 </n-button>
           </n-button-group>
+          <n-input-number
+            v-if="isNumber(table.table.widths[wIdx])"
+            v-model:value="table.table.widths[wIdx]"
+            size="tiny"
+            placeholder="宽度"
+          />
         </n-popover>
       </div>
     </n-flex>
@@ -256,6 +259,7 @@ const removeRow = (table: TableData, idx: number) => {
   table.tabs = idx - 1 > 0 ? idx - 1 : 0;
   if (!table.body.length) table.widths = [];
 };
+
 const batRowAction = (table: TableData, idx: number, action: 'cleanBorder' | 'addBold') => {
   const cols = table.body[idx];
   for (const col of cols) {

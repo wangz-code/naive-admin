@@ -1,12 +1,6 @@
-<!--
- * @Author: wangqz
- * @Date: 2024-07-22
- * @LastEditTime: 2024-11-13
- * @Description: content
--->
 <template>
   <n-card>
-    <oms-table-async ref="tableRef" :columns="createColumns(action)" :api="getR01" rowkey="key" :params="queryParams">
+    <oms-table-async ref="tableRef" :columns="createColumns(action)" :api="getR01" :config="config">
       <template #form="{ collapsed, reload, qParams }">
         <n-form ref="formRef" label-placement="left" label-width="auto" :model="qParams">
           <n-grid :x-gap="8" :y-gap="15" cols="2 s:3 m:4 l:5 xl:6" :collapsed="collapsed" :collapsed-rows="1" responsive="screen">
@@ -70,7 +64,7 @@
 <script lang="ts" setup>
 import { getR01, R01Data } from '#/apis';
 import { renderIcon } from '#/components/Iconx';
-import { OmsTableAsync, useAsyncTable } from 'naive-oms';
+import { OmsTableAsync, TableConfig, useAsyncTable } from 'naive-oms';
 import { ArrowUndoOutline, CloseOutline, Trash } from '@vicons/ionicons5';
 import { Checks, CirclePlus, Send } from '@vicons/tabler';
 import { NButton, type FormInst } from 'naive-ui';
@@ -80,17 +74,20 @@ type RowData = R01Data;
 const message = useMessage();
 const formRef = ref<FormInst | null>(null);
 const { tableRef, reload } = useAsyncTable<RowData>();
-const queryParams = {
-  fuzzy: '',
-  filter: {
-    name: '',
-    state: null,
-    saleValue: null,
-    where: '',
-    phone: '',
-    select: '',
-    stateValue: '',
-    dateRange: null,
+const config: TableConfig = {
+  rowKey: 'id',
+  params: {
+    fuzzy: '',
+    filter: {
+      name: '',
+      state: null,
+      saleValue: null,
+      where: '',
+      phone: '',
+      select: '',
+      stateValue: '',
+      dateRange: null,
+    },
   },
 };
 const action = (): VNodeChild =>

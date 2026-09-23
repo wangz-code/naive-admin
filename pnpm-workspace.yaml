@@ -70,5 +70,5 @@ catalog:
   vite-plugin-vue-devtools: ^7.5.4
   vitest: ^2.1.4
   vue-tsc: ^2.1.8
-  naive-oms: ^1.0.12
+  naive-oms: ^1.0.23
 

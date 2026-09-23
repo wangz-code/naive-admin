@@ -1,3 +1,8 @@
+<style scoped>
+.b-primary {
+  border: 1px var(--primary-color) solid;
+}
+</style>
 <template>
   <div class="w-full">
     <n-tabs placement="top">
@@ -7,6 +12,7 @@
             <n-button @click="() => preview()">预览</n-button>
             <n-button @click="clean('content')">清空</n-button>
             <n-button @click="addTable('content')">+表格</n-button>
+            <n-button @click="addLine('content')">+线</n-button>
             <n-dropdown trigger="hover" :options="copyOptions" @select="copyTable">
               <n-button>+复制一份</n-button>
             </n-dropdown>
@@ -22,27 +28,27 @@
         </n-card>
         <n-scrollbar ref="scroll" class="m-t-xs w-full" style="max-height: 70vh">
           <div class="m-r-2" v-for="(content, cIdx) in docDefinition.content" :key="cIdx">
-            <edit-table v-if="content.table" :id="'t-' + cIdx" field="content" :doc="content"></edit-table>
+            <edit-table v-if="content.table" class="b-primary m-b-2" :id="'t-' + cIdx" field="content" :doc="content"></edit-table>
+            <edit-canvas v-if="content.canvas" class="b-primary m-b-2" :id="'t-' + cIdx" field="content" :col="content"></edit-canvas>
           </div>
           <n-back-top right="35%" />
         </n-scrollbar>
       </n-tab-pane>
       <n-tab-pane name="background" tab="页面配置">
-        <n-alert class="m-b-1" title="背景配置" type="warning"> 页面超出后会自动重复下列配置,相当于页面的背景 </n-alert>
         <n-card size="small" class="m-b-1">
           <n-flex>
             <n-button @click="() => preview()">预览</n-button>
             <n-button @click="clean('background')">清空</n-button>
+            <n-button @click="hiddenFooter">隐藏页脚</n-button>
             <n-button @click="addTable('background')">+表格</n-button>
             <n-button @click="addBackground">+默认背景</n-button>
           </n-flex>
         </n-card>
-        <div class="m-b-1">
-          <n-input-group>
-            <n-input-group-label>页边距(左 上 右 下)</n-input-group-label>
-            <n-input-number v-for="(_, mIdx) in docDefinition.pageMargins" v-model:value="docDefinition.pageMargins[mIdx]" @update-value="() => preview()" />
-          </n-input-group>
-        </div>
+        <n-alert class="m-b-1" title="背景配置" type="warning"> 页面超出后会自动重复下列配置,相当于页面的背景 </n-alert>
+        <n-input-group class="m-b-1">
+          <n-input-group-label>页边距(左 上 右 下)</n-input-group-label>
+          <n-input-number v-for="(_, mIdx) in docDefinition.pageMargins" v-model:value="docDefinition.pageMargins[mIdx]" @update-value="() => preview()" />
+        </n-input-group>
         <edit-table v-for="(bkg, bkgIdx) in docDefinition.background" field="background" :key="bkgIdx" :doc="bkg"></edit-table>
       </n-tab-pane>
     </n-tabs>
@@ -51,11 +57,11 @@
 
 <script lang="ts" setup>
 import { buildUUID } from '#/utils';
-import { cloneDeep, debounce } from 'lodash-es';
+import { cloneDeep, debounce, isArray } from 'lodash-es';
 import { NTab } from 'naive-ui';
 import { ref } from 'vue';
-import { EditTable } from './index';
-import { docDefinition, logo, mergeDoc, textPub, colPub } from './mix';
+import { EditTable, EditCanvas } from './index';
+import { docDefinition, logo, mergeDoc, textPub, colPub, getDoc } from './mix';
 const emit = defineEmits(['preview']);
 
 let copyVal = null as any;
@@ -74,8 +80,12 @@ const blockOptions = [
     key: 'addGoods',
   },
   {
-    label: '+ 其他',
+    label: '+ 协议等',
     key: 'addOther',
+  },
+  {
+    label: '+ 收款单',
+    key: 'addCash',
   },
 ];
 
@@ -85,12 +95,17 @@ const scroll = ref(null);
 const setTabs = (value: string) => {
   document.getElementById(value)?.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' });
 };
-const tabs = computed(() => docDefinition.value.content.map((item) => item.table.tittle));
+const tabs = computed(() => docDefinition.value.content.map((item) => item.tittle));
 
 const copyTable = (num: number) => {
-  if (copyVal == null) copyVal = docDefinition.value.content;
+  if (copyVal == null) copyVal = getDoc();
   const res = [];
   for (let i = 0; i < num; i++) {
+    if (isArray(copyVal)) {
+      for (const item of copyVal) {
+        item.uuid = buildUUID();
+      }
+    }
     res.push(...cloneDeep(copyVal)!);
   }
   docDefinition.value.content.push(...res);
@@ -102,8 +117,8 @@ const addTable = (field: 'content' | 'background') => {
   const data = docDefinition.value[field];
   data.push({
     uuid,
+    tittle: '表格' + (docDefinition.value.content.length + 1),
     table: {
-      tittle: '表格' + (docDefinition.value.content.length + 1),
       body: [
         [
           { text: '电子销售单', ...textPub() },
@@ -120,12 +135,37 @@ const addTable = (field: 'content' | 'background') => {
   preview(uuid);
 };
 
+const addLine = (field: 'content' | 'background') => {
+  const uuid = buildUUID();
+  const data = docDefinition.value[field];
+
+  data.push({
+    uuid,
+    tittle: '线',
+    canvas: [
+      {
+        type: 'line',
+        x1: -40,
+        y1: 0,
+        x2: 560,
+        y2: 0,
+        lineWidth: 1,
+        lineColor: 'black',
+        dash: { length: 5, space: 3 }, // 设置虚线的长度和间隔
+      },
+    ],
+    margin: [0, -1, 0, 0],
+  });
+  mergeDoc({ [field]: data });
+  preview(uuid);
+};
+
 const addHeader = () => {
   const uuid = buildUUID();
   docDefinition.value.content.push({
     uuid,
+    tittle: '头部',
     table: {
-      tittle: '头部',
       body: [
         [
           {
@@ -143,7 +183,7 @@ const addHeader = () => {
             margin: [0, 10, 0, 0],
             bold: true,
           },
-          { ...colPub(), qr: '二维码', alignment: 'right', fit: 80 },
+          { ...colPub(), qr: 'lstest-11824120013', alignment: 'right', fit: 70 },
         ],
         [
           {
@@ -189,11 +229,10 @@ const addHeader = () => {
 
 const addGoods = () => {
   const uuid = buildUUID();
-
   docDefinition.value.content.push({
     uuid,
+    tittle: '商品信息',
     table: {
-      tittle: '商品信息',
       body: [
         [
           { text: '商品名称', ...textPub(), bold: true },
@@ -226,8 +265,8 @@ const addBaseInfo = () => {
   const uuid = buildUUID();
   docDefinition.value.content.push({
     uuid,
+    tittle: '顾客信息',
     table: {
-      tittle: '顾客信息',
       body: [
         [
           { text: '甲方(买方)：', ...textPub(), bold: true, alignment: 'left' },
@@ -265,8 +304,8 @@ const addOther = () => {
   const other = [
     {
       uuid,
+      tittle: '销售金额',
       table: {
-        tittle: '销售金额',
         body: [
           [
             { text: '销售单金额：', ...textPub(), bold: true },
@@ -284,8 +323,8 @@ const addOther = () => {
       margin: [0, -1, 0, 0],
     },
     {
+      tittle: '购物须知',
       table: {
-        tittle: '购物须知',
         body: [
           [
             { text: '销售单备注：', ...textPub(), bold: true, lineHeight: 3.5 },
@@ -341,8 +380,8 @@ const addOther = () => {
       margin: [0, -1, 0, 0],
     },
     {
+      tittle: '底部',
       table: {
-        tittle: '底部',
         body: [
           [
             { text: '一经签字确认，将视同甲方(买方)对本单据所有内容均表示同意。 ', ...textPub(), alignment: 'left', bold: true, border: [true, true, false, false] },
@@ -361,6 +400,57 @@ const addOther = () => {
   ];
   docDefinition.value.content = docDefinition.value.content.concat(other);
   preview(uuid);
+};
+
+const addCash = () => {
+  // docDefinition.value.content
+  addHeader();
+  const cash = [
+    {
+      uuid: buildUUID(),
+      tittle: '表格',
+      table: {
+        body: [
+          [
+            { text: '电子销售单', fontSize: 10, alignment: 'center', bold: false, colSpan: 1, rowSpan: 1, margin: [0, 0, 0, 0], border: [true, true, true, true] },
+            { text: '电子销售单', fontSize: 10, alignment: 'center', bold: false, colSpan: 1, rowSpan: 1, margin: [0, 0, 0, 0], border: [true, true, true, true] },
+            { text: '电子销售单', fontSize: 10, alignment: 'center', bold: false, colSpan: 1, rowSpan: 1, margin: [0, 0, 0, 0], border: [true, true, true, true] },
+            { text: '第一联 . 顾客联', alignment: 'center', fontSize: 8, bold: true, margin: [0, 0, 0, 0], colSpan: 1, rowSpan: 4, border: [false, false, false, false] },
+          ],
+          [
+            { text: '电子销售单', alignment: 'center', fontSize: 10, bold: false, margin: [0, 0, 0, 0], colSpan: 1, rowSpan: 1 },
+            { text: '电子销售单', alignment: 'center', fontSize: 10, bold: false, margin: [0, 0, 0, 0], colSpan: 1, rowSpan: 1 },
+            { text: '电子销售单', alignment: 'center', fontSize: 10, bold: false, margin: [0, 0, 0, 0], colSpan: 1, rowSpan: 1 },
+            { text: '', alignment: 'center', fontSize: 10, bold: false, margin: [0, 0, 0, 0], colSpan: 1, rowSpan: 1 },
+          ],
+          [
+            { text: '电子销售单', alignment: 'center', fontSize: 10, bold: false, margin: [0, 0, 0, 0], colSpan: 1, rowSpan: 1 },
+            { text: '电子销售单', alignment: 'center', fontSize: 10, bold: false, margin: [0, 0, 0, 0], colSpan: 1, rowSpan: 1 },
+            { text: '电子销售单', alignment: 'center', fontSize: 10, bold: false, margin: [0, 0, 0, 0], colSpan: 1, rowSpan: 1 },
+            { text: '', alignment: 'center', fontSize: 10, bold: false, margin: [0, 0, 0, 0], colSpan: 1, rowSpan: 1 },
+          ],
+          [
+            { text: '电子销售单', alignment: 'center', fontSize: 10, bold: false, margin: [0, 0, 0, 0], colSpan: 1, rowSpan: 1 },
+            { text: '电子销售单', alignment: 'center', fontSize: 10, bold: false, margin: [0, 0, 0, 0], colSpan: 1, rowSpan: 1 },
+            { text: '电子销售单', alignment: 'center', fontSize: 10, bold: false, margin: [0, 0, 0, 0], colSpan: 1, rowSpan: 1 },
+            { text: '', alignment: 'center', fontSize: 10, bold: false, margin: [0, 0, 0, 0], colSpan: 1, rowSpan: 1 },
+          ],
+        ],
+        widths: ['*', '*', '*', 10],
+        tabs: 0,
+      },
+      layout: '',
+      margin: [0, -1, -10, 0],
+    },
+    {
+      uuid: buildUUID(),
+      tittle: '线',
+      canvas: [{ type: 'line', x1: -40, y1: 0, x2: 560, y2: 0, lineWidth: 1, lineColor: 'black', dash: { length: 5, space: 3 } }],
+      margin: [0, 35, 0, 35],
+    },
+  ];
+  docDefinition.value.content.push(...cash);
+  preview();
 };
 
 const clean = (field: 'content' | 'background') => {
@@ -469,6 +559,11 @@ const addBackground = () => {
   preview();
 };
 
+const hiddenFooter = ()=>{
+  mergeDoc({ footer:()=>{} });
+  preview();
+}
+
 const preview = debounce((uuid?: string) => {
   uuid &&
     nextTick(() => {
@@ -480,7 +575,7 @@ const preview = debounce((uuid?: string) => {
   emit('preview');
 }, 500);
 
-const methods = { addHeader, addBaseInfo, addGoods, addOther, addBackground };
+const methods = { addHeader, addBaseInfo, addGoods, addOther, addBackground, addCash };
 
 const addBlock = (value: keyof typeof methods) => methods[value]();
 
