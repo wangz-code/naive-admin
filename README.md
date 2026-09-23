@@ -11,8 +11,8 @@
 ## ![detail.png](https://raw.githubusercontent.com/WangSunio/img/main/images/detail.png)
 ![report.png](https://raw.githubusercontent.com/WangSunio/img/main/images/cols.png)
 
+最初版布局基于: https://github.com/kirklin/celeris-web
 改动
-
 - 保留 celeris css,并将@celeris 依赖替换为本地, 修改布局, tabs 等
 - 自动导入 api & components
 - nitro 拦截请求模拟测试数据
