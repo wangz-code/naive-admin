@@ -35,21 +35,20 @@
         </n-scrollbar>
       </n-tab-pane>
       <n-tab-pane name="background" tab="页面配置">
-        <n-alert class="m-b-1" title="背景配置" type="warning"> 页面超出后会自动重复下列配置,相当于页面的背景 </n-alert>
         <n-card size="small" class="m-b-1">
           <n-flex>
             <n-button @click="() => preview()">预览</n-button>
             <n-button @click="clean('background')">清空</n-button>
+            <n-button @click="hiddenFooter">隐藏页脚</n-button>
             <n-button @click="addTable('background')">+表格</n-button>
             <n-button @click="addBackground">+默认背景</n-button>
           </n-flex>
         </n-card>
-        <div class="m-b-1">
-          <n-input-group>
-            <n-input-group-label>页边距(左 上 右 下)</n-input-group-label>
-            <n-input-number v-for="(_, mIdx) in docDefinition.pageMargins" v-model:value="docDefinition.pageMargins[mIdx]" @update-value="() => preview()" />
-          </n-input-group>
-        </div>
+        <n-alert class="m-b-1" title="背景配置" type="warning"> 页面超出后会自动重复下列配置,相当于页面的背景 </n-alert>
+        <n-input-group class="m-b-1">
+          <n-input-group-label>页边距(左 上 右 下)</n-input-group-label>
+          <n-input-number v-for="(_, mIdx) in docDefinition.pageMargins" v-model:value="docDefinition.pageMargins[mIdx]" @update-value="() => preview()" />
+        </n-input-group>
         <edit-table v-for="(bkg, bkgIdx) in docDefinition.background" field="background" :key="bkgIdx" :doc="bkg"></edit-table>
       </n-tab-pane>
     </n-tabs>
@@ -58,7 +57,7 @@
 
 <script lang="ts" setup>
 import { buildUUID } from '#/utils';
-import { cloneDeep, debounce } from 'lodash-es';
+import { cloneDeep, debounce, isArray } from 'lodash-es';
 import { NTab } from 'naive-ui';
 import { ref } from 'vue';
 import { EditTable, EditCanvas } from './index';
@@ -102,6 +101,11 @@ const copyTable = (num: number) => {
   if (copyVal == null) copyVal = getDoc();
   const res = [];
   for (let i = 0; i < num; i++) {
+    if (isArray(copyVal)) {
+      for (const item of copyVal) {
+        item.uuid = buildUUID();
+      }
+    }
     res.push(...cloneDeep(copyVal)!);
   }
   docDefinition.value.content.push(...res);
@@ -160,8 +164,8 @@ const addHeader = () => {
   const uuid = buildUUID();
   docDefinition.value.content.push({
     uuid,
+    tittle: '头部',
     table: {
-      tittle: '头部',
       body: [
         [
           {
@@ -179,7 +183,7 @@ const addHeader = () => {
             margin: [0, 10, 0, 0],
             bold: true,
           },
-          { ...colPub(), qr: '二维码', alignment: 'right', fit: 80 },
+          { ...colPub(), qr: 'lstest-11824120013', alignment: 'right', fit: 70 },
         ],
         [
           {
@@ -225,11 +229,10 @@ const addHeader = () => {
 
 const addGoods = () => {
   const uuid = buildUUID();
-
   docDefinition.value.content.push({
     uuid,
+    tittle: '商品信息',
     table: {
-      tittle: '商品信息',
       body: [
         [
           { text: '商品名称', ...textPub(), bold: true },
@@ -262,8 +265,8 @@ const addBaseInfo = () => {
   const uuid = buildUUID();
   docDefinition.value.content.push({
     uuid,
+    tittle: '顾客信息',
     table: {
-      tittle: '顾客信息',
       body: [
         [
           { text: '甲方(买方)：', ...textPub(), bold: true, alignment: 'left' },
@@ -301,8 +304,8 @@ const addOther = () => {
   const other = [
     {
       uuid,
+      tittle: '销售金额',
       table: {
-        tittle: '销售金额',
         body: [
           [
             { text: '销售单金额：', ...textPub(), bold: true },
@@ -320,8 +323,8 @@ const addOther = () => {
       margin: [0, -1, 0, 0],
     },
     {
+      tittle: '购物须知',
       table: {
-        tittle: '购物须知',
         body: [
           [
             { text: '销售单备注：', ...textPub(), bold: true, lineHeight: 3.5 },
@@ -377,8 +380,8 @@ const addOther = () => {
       margin: [0, -1, 0, 0],
     },
     {
+      tittle: '底部',
       table: {
-        tittle: '底部',
         body: [
           [
             { text: '一经签字确认，将视同甲方(买方)对本单据所有内容均表示同意。 ', ...textPub(), alignment: 'left', bold: true, border: [true, true, false, false] },
@@ -401,7 +404,7 @@ const addOther = () => {
 
 const addCash = () => {
   // docDefinition.value.content
-
+  addHeader();
   const cash = [
     {
       uuid: buildUUID(),
@@ -443,10 +446,10 @@ const addCash = () => {
       uuid: buildUUID(),
       tittle: '线',
       canvas: [{ type: 'line', x1: -40, y1: 0, x2: 560, y2: 0, lineWidth: 1, lineColor: 'black', dash: { length: 5, space: 3 } }],
-      margin: [0, 10, 0, 0],
+      margin: [0, 35, 0, 35],
     },
   ];
-  docDefinition.value.content.push(...cash)
+  docDefinition.value.content.push(...cash);
   preview();
 };
 
@@ -555,6 +558,11 @@ const addBackground = () => {
   mergeDoc({ background, pageMargins: [40, 207, 40, 20] });
   preview();
 };
+
+const hiddenFooter = ()=>{
+  mergeDoc({ footer:()=>{} });
+  preview();
+}
 
 const preview = debounce((uuid?: string) => {
   uuid &&

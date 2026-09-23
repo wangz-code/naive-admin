@@ -12,9 +12,6 @@
 ![report.png](https://raw.githubusercontent.com/WangSunio/img/main/images/cols.png)
 ![report.png](https://raw.githubusercontent.com/WangSunio/img/main/images/pdf.png)
 
-
-## 源仓库 [celeris](https://github.com/kirklin/celeris-web)
-
 改动
 
 - 保留 celeris css,并将@celeris 依赖替换为本地, 修改布局, tabs 等
