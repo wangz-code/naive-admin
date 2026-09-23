@@ -8,6 +8,7 @@ export default createViteConfig({
           changeOrigin: true,
           // mock代理目标地址
           target: 'http://localhost:5340',
+          //  target: 'https://dd.djgo.cc',
           ws: false,
         },
       },
